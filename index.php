@@ -1,28 +1,27 @@
 <?php
 	$id = @$_GET['id'];
+
 	if(@$_POST['keymap'] != '') {
-		if($id=='')
-			$id = uniqid();
-		file_put_contents("data/$id", $_POST['keymap'].' '.$_POST['language'].','.$_POST['code']);
+		if($id == '') $id = uniqid();
+		file_put_contents("data/$id", json_encode($_POST));
 		$url = $_SERVER['HTTP_HOST'];
 		$path = rtrim(dirname($_SERVER['PHP_SELF']), '\\/');
-		header("Location:http://$url$path/$id");
+		header("Location:http://$url$path/?id=$id");
 		exit();
 	}
 
-	if($id=='') {
+	if($id == '') {
 		$keymap = '';
-		$language = 'Normal';
+		$lang = 'Normal';
 		$code = '';
 	} else if(file_exists("data/$id")) {
-		$data = file_get_contents("data/$id");
-		$info = strstr($data, ',', true);
-		$code = substr(strstr($data, ','), 1);
-		sscanf($info, "%s %s", $keymap, $language);
+		$data = json_decode(file_get_contents("data/$id"));
+		//var_dump($data); exit();
+		$code = $data->code;
+		$keymap = $data->keymap;
+		$lang = $data->lang;
 	} else {
-		$url = $_SERVER['HTTP_HOST'];
-		$path = trim(dirname($_SERVER['PHP_SELF']), '\\/');
-		header("Location:http://$url/$path/index.php");
+		header("Location:index.php");
 		exit();
 	}
 
@@ -42,7 +41,7 @@
 		'SQL'        => [ 'text/x-sql', ['sql'] ],
 		'Shell'      => [ 'text/x-sh', ['shell'] ],
 	);
-	$lang = $lang_info[$language];
+	$lang = $lang_info[$lang];
  ?>
 <!DOCTYPE html>
 <html>
@@ -86,9 +85,9 @@
 			<option value="emacs" <?php if($keymap=='emacs') echo 'selected="selected"'; ?>>Emacs</option>
 		</select>
 		<label>Language:</label>
-		<select name="language" onchange="document.getElementById('content').submit()">
+		<select name="lang" onchange="document.getElementById('content').submit()">
 			<?php foreach($lang_info as $key => $value) { ?>
-			<option value="<?php echo $key; ?>" <?php if($key==$language) echo 'selected="selected"'; ?>><?php echo $key; ?></option>
+			<option value="<?php echo $key; ?>" <?php if($value==$lang) echo 'selected="selected"'; ?>><?php echo $key; ?></option>
 			<?php } ?>
 		</select>
 		<input type="submit" value="Save" />
